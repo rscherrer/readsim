@@ -1,0 +1,186 @@
+---
+title: "Read and Combine Binary Simulation Data with Readsim"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{vignette}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Background
+
+This package can be used to retrieve data and assemble them into tables. Specifically, it is made to work with data saved into files as **one-dimensional arrays**. This can be the case, for example, of data saved by programs that can generate a wide range of output, where the way the variables of that output should be arranged to be analyzed can be flexible depending on the use case. This may be commonly found in data from simulation programs that can produce a wide array of output, such as **individual-based simulation models** (IBM).
+
+In other words, this package is made for those simulation programs that do not save a particular, massive `.csv` file with all the information related to each individual that ever existed in the simulation (in an IBM example). Instead, those variables that are population-wide or time step-specific (e.g. the time step itself) will be saved in separate files where they do not need to be duplicated thousands of time, once for each individual. This can be a useful way to store data if **saving on storage space and/or writing time is important** during program execution (e.g. if thousands of simulations must be run on a computer cluster). Hence, use this package for when **data with different units of observation** are saved in separate files and where those variables may need to be **combined in various ways** depending on the analysis at hand.
+
+### For example
+
+Say an IBM can save the files `time.dat`, `popsize.dat`, `traitmeans.dat` and `individuals.dat`. Each of those files has its own resolution: `time.dat` and `popsize.dat` record the time step and the number of individuals in the population, respectively, on a per time step basis; `traitmeans.dat` contains the average values of traits, and there are as many as there are traits, per time step; and `individuals.dat` contains a number of individual-specific variables (e.g. location, trait value, etc.) on a per individual, per time step basis.
+
+Those files will have very different numbers of values saved into them. One analysis, then, may require simply tracking population size through time and only need `time.dat` and `popsize.dat` to be loaded. Another analysis may look at the mean of various traits through time, and so, `traitmeans.dat` and `time.dat` will be needed, maybe with `popsize.dat` as well depending on what we want to show. Yet in another analysis, we may want to show data points for every individual, and so we will need `individuals.dat`, `time.dat` and maybe the other two as well.
+
+The point is, while technically various `.csv` files could be saved with many columns in them, and with different units of observation (e.g. per time step versus per individual) to accommodate the needs of those analyses, saving each variable in a separate file allows to **avoid saving duplicated information**. Indeed, in our example, time steps would need to be duplicated (possibly many times) if they had to be present both in a population-level data set and an individual-level data set.
+
+Note that this approach does not preclude combining some variables into a single file (e.g. `individuals.dat` may include several attributes per individual), as long as those variables are always needed together and none of them in particular is ever needed in **various combinations with other variables**, with different units of observation (e.g. as `time.dat` could be).
+
+Now let us move on to how the package works.
+
+## Use cases
+
+### Disclaimer
+
+This package assumes that the data has been saved by a third-party program in the format described above. It is not intended to save data itself, as it is not a simulation program (the function `write_data` is only for toy usage).
+
+### Note
+
+In its present form, the package is only intended to read **numbers in binary files.** This is because numbers are much quicker to read and write as binary than as text (as in e.g. `.csv` files) and can take less space. We therefore assume that the program that generated the data did so in binary format. This means that in order to read the data, the user **must know the size (in bytes) of the values that have been saved** by the third party program. We need to know, for example, if the file is to be read 8 bytes at a time (e.g. typical of double precision floating point numbers, coerced into type `numeric` in R), 4 bytes at a time (e.g. `integer`) or 1 byte at a time (e.g. booleans, coerced to `logical`). Basically, whoever shared the data must have done so with the information of how to read them. We will come back to this in more detail at the end of this vignette.
+
+### Load the package
+
+As with any pipeline in R, let us start with loading the package:
+
+```{r setup}
+library(readsim)
+```
+
+Then, we set up the directory where to find some example data:
+
+```{r setpath}
+path <- system.file("extdata", "example", package = "readsim")
+```
+
+This directory contains a few files that we can play with:
+
+```{r checkfiles}
+list.files(path)
+```
+
+### Read some data
+
+The key function of this package is `read_data()`, which will allow us to do pretty much everything this package has to offer. Hence, unless mentioned otherwise, hereafter whenever arguments are mentioned, they are assumed to be arguments of `read_data()`.
+
+To read a data file, use:
+
+```{r}
+read_data(path, "time")
+```
+
+where the name of the file should appear **without extension**. By default, the function will look for files in `path` with the extension `.dat`, but other extensions can be given with the `ext` argument:
+
+```{r extension}
+read_data(path, "otherext", ext = ".bin")
+```
+
+### Combining data
+
+The whole point of the package is to read multiple files and combine them. The simplest files to combine are those that have the same dimensions. For example:
+
+```{r combine}
+read_data(path, c("time", "popsize"))
+```
+
+Here, both `time` and `popsize` have been saved on a per time step basis, and so they have the same number of values.
+
+### Splitting into columns
+
+Things start to become interesting when we want to combine variables with different dimensions. For example, the file `patchsizes.dat` has 10 values per time step (as it records the number of individuals in each one of 10 patches throughout a simulation). Hence, it has 10 times more values than `time.dat` or `popsize.dat`. One way to combine those variables would then be, for example, to read the `patchsizes`, and then split them into 10 columns, so as to fit in a table with one row per time step - to which we could append `time` and/or `popsize`! Here is how we do it:
+
+```{r split}
+read_data(path, c("time", "popsize", "patchsizes"), split = c(1, 1, 10))
+```
+
+This results in a table with as many rows as there are time steps, and many columns (since `patchsizes` has been split into as many columns as necessary). Now we can see that in the first time step, out of the 10 individuals of the initial population, 1 was in patch 1, 0 were in patch 2, 1 was in patch 3, and so on...
+
+#### Separator
+
+Note that when splitting variables into multiple columns, we append a suffix to the name of the variable to form column names. The default is `patchsizes_1`, `patchsizes_2`, etc., but the separator (here `"_"`) can be modified using the `sep` argument.
+
+#### Filling by rows
+
+Also note that vectors of data are split into columns by row as a default. That is, the first 3 values of `patchsizes.dat` will populate the first row of columns `patchsizes_1`, `patchsizes_2` and `patchsizes_3` in the above example. To fill in by column, set `byrow = FALSE`. (It is possible to supply argument `byrow` as a vector, with one `TRUE` or `FALSE` per variable.)
+
+### Duplicating values
+
+It may happen that instead of being split, some variables have to be duplicated to be appended to much longer data. For instance, in the above examples we split `patchsizes` so that it would have the same number of rows as `time`. Hence, we have de facto read these data in a **wide format**. We could have decided, instead, to read them in a **long format**, that is, not split `patchsizes`, read it as a very long column and append a duplicated version of `time` to it. Here, `time` must be duplicated indeed, and 10 times exactly, to match the number of rows of the very long `patchsizes` column, because there are 10 patches for which we have data every generation.
+
+To do that, we use:
+
+```{r duplicate}
+read_data(path, c("time", "patchsizes"), dupl = c(10, 1))
+```
+
+Of course, the result is less visually appealing for this specific example, but remember that this *long format* is the format preferred by very handy packages such as **ggplot2**.
+
+### Custom number of duplications
+
+In the previous example we duplicated each entry in `time` exactly 10 times, to match the number of `patchsizes` per time step. Now, what if the number of times to duplicate the values in `time` was **not the same** from one value to the next?
+
+This would be the case, for example, if we wanted to append a `time` column to a table of `individuals`, if the number of individuals can change from one generation to the next. How do we know which individuals belong to time step 12 and which ones belong to time step 13, if by design we did not save `time` alongside `individuals` (to keep things modular, as explained in the preamble)?
+
+This can be done if we know how many observations there should be per time step, e.g. through `popsize.dat`. Then, things would look like:
+
+```{r individuals}
+# First, read population sizes
+popsizes <- read_data(path, "popsize")
+
+# Extract the single column into a vector
+popsizes <- popsizes[[1]]
+
+# Now use it to read individual data
+read_data(path, c("time", "individuals"), dupl = list(popsizes, 1), split = c(1, 3))
+```
+
+As you can see, here we used the information in `popsize` to determine how many times to duplicate each time step in `time`, so each individual can be appended its own time step to. But that's not all: as `individuals` contains 3 values per individual (here, the values of two traits and which patch they are found in), we also needed to split `individuals` into 3 columns with the `split` argument. (Note that here `dupl` is list, as it takes a vector for `time` and a single value for `individuals`.) This is a nice example illustrating the joint use of `split` and `dupl`, and the **flexibility of combinations that this package offers**.
+
+(Here, note that the duplication process is conducted before the split.)
+
+Although this would not make too much sense given the nature of these mock data, we could have, of course, decided to read individuals in a long format, but then, we would have needed to duplicate each time step 3 times more:
+
+```{r long}
+read_data(path, c("time", "individuals"), dupl = list(3 * popsizes, 1))
+```
+
+That's about it for the use of `read_data()`. Because of its modularity, this function can be applied to a great variety of combining tasks. Just make sure that the numbers are sound in `split` and `dupl`, as the function will not be able to concatenate the different variables if their dimensions (after duplicating rows and splitting columns) differ.
+
+### Tibbles
+
+Throughout this vignette, you will have noticed that the output of `read_data()` was always a `tibble`. For it to be a simple `data.frame`, just set `is_tbl = FALSE`.
+
+```{r notibble}
+read_data(path, "time", is_tbl = FALSE)
+```
+
+### Data types
+
+We mentioned above that this package expects (in its present form) **binary files**. By default, `read_data()` will read values every 8 bytes (the size of a double precision floating point number on most 64-bit platforms) and store them into an R object of class `numeric`, the typical R container for such numbers). However, it is possible to change that behavior.
+
+For example, to read a file containing integers that are 4 bytes long, use:
+
+```{r integers}
+read_data(path, "integers", type = "integer", size = 4)
+```
+
+Here, the file `integers.dat` indeed contains 3 integer values, each taking up 32 bits (i.e. 4 bytes). If we had not known that, the regular use of the function would have given us an error saying that 8 (the default number of bytes expected per value) does not neatly divide the size of the file (which is 3 values \* 4 bytes = 12 bytes).
+
+As another example, we could have wanted to read this same file `integers.dat` into the R class `logical`, in which case we would have used:
+
+```{r logical}
+read_data(path, "integers", type = "logical", size = 1)
+```
+
+This call interprets each byte in the data file as a `TRUE` or `FALSE` (i.e. a boolean), and since the 12 bytes can be neatly divided into 12 values of 1 byte each, the function does not error. It returns a `logical` column, having no idea that the file may have originally contained 3 integers (1, 2, 3, as in the example above).
+
+This illustrates an important point that we made earlier, but will emphasize here again: it is **important to know the size of the values in the data files at hand**, so the function knows how the stream of bits is to be decoded.
+
+In many cases, data will have been generated as 64-bit doubles and read without a hitch by the default arguments of the function. However, there could be exceptions to that most common case; for example, if the data is intended to be read as 32-bit integers or 8-bit booleans, as shown above. But it could also be that the data were saved as 32-bit floating point numbers (uncommon but can still happen), in which case `type` should be `"numeric"` with `size = 4`. And conversely, "long integers" (e.g. `size_t` in C++) are commonly 8 bytes long and will require `type = "integer"`, and `size = 8`.
+
+[Point being]{.underline}: the data should come with some **metadata** specifying all that.
+
+(Note that `read_data()` will not accept to read `character` values, because that beats the point of reading binary instead of text.)

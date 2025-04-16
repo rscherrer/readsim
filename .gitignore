@@ -48,3 +48,10 @@ po/*~
 # RStudio Connect folder
 rsconnect/
 
+inst/doc
+/doc/
+/Meta/
+
+^doc$
+^vignettes/.Rhistory$
+^vignettes/.Rproj.user$

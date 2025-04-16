@@ -1,0 +1,122 @@
+---
+title: "Read Parameter Files with Readsim"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{use-read-pars}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+Besides the main function `read_data()` (whose job is self-explanatory), this package also comes with another function, which can be handy to read simulation parameters into R. Not surprisingly, this function is called `read_pars()`. It can be a handy way to append parameter values to their respective simulation data, as at the end of the day, we often want to study the behavior of a model as a function of its parameters.
+
+## Prerequisites
+
+This function assumes that the parameters of a given simulation are stored in the simulation folder, in a **text file** containing one parameter name and its value(s), separated by white spaces (or some other separator to be specified), on **each row**. Something like that:
+
+```         
+# parameters.txt
+foo 1 2 3
+bar 42
+baz 3.14
+```
+
+Parameter values can be of various types (character strings or numbers): `read_pars()` offers the possibility to convert them to the desired type, as we shall see below. Note that empty lines are accepted, and that lines starting with **\#** will be ignored as comments.
+
+## Use cases
+
+### Load the package
+
+Let us first load the package:
+
+```{r setup}
+library(readsim)
+```
+
+Then, we set up the directory where to find some example data:
+
+```{r setpath}
+path <- system.file("extdata", "example", package = "readsim")
+```
+
+### Read parameters
+
+The simplest use case is the following:
+
+```{r read}
+read_pars(path)[1:5]
+```
+
+As you can see, `read_pars()` returns a list of parameters, named as they appear in the parameter file, and their values. From what we see, we can conclude that the parameter file read something like:
+
+```         
+type 1
+popsize 10
+pgood 5 0.8 0.6 0.5 0.3 0.1
+maxgrowths 2 3
+zwidths 1 2
+```
+
+(Or at least, the beginning of it, as we only show the first 5 values in the output here.)
+
+#### File name
+
+The function will automatically look for a file called `parameters.txt` in `path`. To change the default name of the parameter file, just change it in the `filename` argument.
+
+#### Separator
+
+By default the function expects white spaces (`" "`) between parameter names and their value(s), as shown in the examples above. This behavior can be changed with the `sep` argument (e.g. `sep = "   "`, `"_"` or `"~~~"`).
+
+### Convert types
+
+By default, `read_pars()` will read parameters from the text file and convert them all to `numeric`. It is therefore **primarily designed for numerical parameters**, but this behavior can also be changed. We provide the arguments `is_num` and `is_bool` to specify which parameters should be converted into `numeric` and `logical`, respectively. Each of these two arguments can take the values `"all"`, `"none"` or a vector of parameter names as they appear in the parameter file (e.g. `c("type", "popsize", "pgood")`). By default, therefore, `is_num = "all"` and `is_bool = "none"`.
+
+To convert only some parameters to `numeric`, use:
+
+```{r somenumeric}
+read_pars(path, is_num = c("type", "popsize"))[1:5]
+```
+
+As you can see, only parameters `type` and `popsize` have been read as numbers, while the rest are of class `character` (`""`).
+
+To convert some parameters to `logical`, use:
+
+```{r somelogical}
+read_pars(path, is_bool = c("savepars", "loadarch"))[20:25]
+```
+
+Here, parameters `savepars` and `loadarch` have been read as `logical` (i.e. `TRUE` or `FALSE`).
+
+Note that conversion to `logical` comes after conversion to `numeric` in the code, so a parameter will end up being coerced into a `logical` if mentioned both in `is_num` and `is_bool`.
+
+Set `is_num = "none"` and `is_bool = "none"` to read all parameters as `character` strings and not perform any conversion.
+
+### Append to data
+
+Once parameters have been read, they can be appended to data (we refer the reader to another vignette, accessible with `vignette("use-read-data", package = "readsim")`, for how `read_data()` works) as follows:
+
+```{r append}
+# First read some data
+data <- read_data(path, c("time", "popsize"))
+
+# Then parameters
+pars <- read_pars(path)
+
+# Append
+data$type <- pars$type
+data$pgood1 <- pars$pgood[1]
+data$pgood2 <- pars$pgood[2]
+
+# Check
+data
+```
+
+where, as expected, the parameter values have been duplicated across all rows of their respective simulation. This should allow, in turn, to combine multiple simulations and be able to differentiate them on the basis of their parameter, and ultimately perform some interesting analyses (the wrangling of which is beyond the scope of this package).
+
+That's all for `read_pars()`!

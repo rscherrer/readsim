@@ -1,0 +1,6 @@
+# A comment
+foo 1
+
+# Another one
+
+bar 2
