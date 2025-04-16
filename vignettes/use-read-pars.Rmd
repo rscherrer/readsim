@@ -8,6 +8,10 @@ vignette: >
 ---
 
 ```{r, include = FALSE}
+# Set R Markdown options
+options(rmarkdown.html_vignette.check_title = FALSE)
+
+# Chunk options
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"

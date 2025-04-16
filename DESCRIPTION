@@ -24,3 +24,4 @@ Suggests:
 Config/testthat/edition: 3
 License: MIT + file LICENSE
 VignetteBuilder: knitr
+URL: https://rscherrer.github.io/readsim/
