@@ -12,6 +12,16 @@ This package provides one key function, `read_data()`, which can be used to comb
 
 The package is made to read **binary files**, as they are a fast and light way to write numerical variables separately in a way that they can be later combined as desired.
 
+## Installation
+
+The package can be installed from GitHub:
+
+```r
+devtools::install_github("rscherrer/readsim", build_vignettes = TRUE)
+```
+
+This will allow to browse the vignettes of the package using `vignette()`.
+
 ## Example
 
 Simulation data can be complex, and a given study may require an analyses of a thousand simulations recording some population-level data at every generation, for example (in `.csv` format):
@@ -53,16 +63,6 @@ For more information and concrete use cases, please refer to the main vignette i
 ```r
 vignette("use-read-data", package = "readsim")
 ```
-
-## Installation
-
-The package can be installed from GitHub:
-
-```r
-devtools::install_github("rscherrer/readsim", build_vignettes = TRUE)
-```
-
-This will allow to browse the vignettes of the package using `vignette()`. 
 
 ## See also
 
