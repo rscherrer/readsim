@@ -76,6 +76,8 @@ vignette("use-read-pars", package = "readsim")
 
 This package was developed in RStudio 2024.12.1 and Visual Studio Code 1.99.0 using R 4.3.3 (compiled with GCC 13.2.0) on Ubuntu Linux 24.04 LTS, making use of packages **covr** 3.6.4, **devtools** 2.4.5, **knitr** 1.49, **rmarkdown** 2.29, **roxygen2** 7.3.1, **testthat** 3.0.0, **usethis** 2.2.2.
 
+Occasional use was made of ChatGPT and GitHub Copilot in the development of this code.
+
 ## Permissions
 
 This code is licensed under the [MIT License](LICENSE.md). You are free to use, modify, and distribute it, provided that the original copyright notice and permission notice are included in all copies or substantial portions of the software.
