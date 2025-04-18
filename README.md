@@ -72,11 +72,13 @@ There is also a `read_pars()` function that allows to read parameter text files.
 vignette("use-read-pars", package = "readsim")
 ```
 
+## Dependencies
+
+Check `Imports` in the `DESCRIPTION` file for a list of packages (and minimum versions required) listed as dependencies (other than core R packages) for this package.
+
 ## About
 
-This package was developed in RStudio 2024.12.1 and Visual Studio Code 1.99.0 using R 4.3.3 (compiled with GCC 13.2.0) on Ubuntu Linux 24.04 LTS, making use of packages **covr** 3.6.4, **devtools** 2.4.5, **knitr** 1.49, **rmarkdown** 2.29, **roxygen2** 7.3.1, **testthat** 3.0.0, **usethis** 2.2.2.
-
-Occasional use was made of ChatGPT and GitHub Copilot in the development of this code.
+This package was developed on Ubuntu Linux 24.04 LTS, in [RStudio](https://posit.co/download/rstudio-desktop/) 2024.12.1 and [Visual Studio Code](https://code.visualstudio.com/) 1.99.0 ([R extension](https://marketplace.visualstudio.com/items/?itemName=REditorSupport.r) 2.8.5), with [R](https://www.r-project.org/) 4.3.3 (compiled with [GCC](https://gcc.gnu.org/) 13.2.0), and making use of packages [covr](https://covr.r-lib.org/) 3.6.4, [devtools](https://devtools.r-lib.org/) 2.4.5, [knitr](https://cran.r-project.org/web/packages/knitr/index.html) 1.49, [languageserver](https://cran.r-project.org/web/packages/languageserver/index.html) 0.3.16, [lintr](https://lintr.r-lib.org/) 3.1.1, [rmarkdown](https://cran.r-project.org/web/packages/rmarkdown/index.html) 2.29, [roxygen2](https://roxygen2.r-lib.org/) 7.3.1, [testthat](https://testthat.r-lib.org/) 3.0.0 and [usethis](https://usethis.r-lib.org/) 2.2.2. Occasional use was made of [ChatGPT](https://chatgpt.com/) and [GitHub Copilot](https://github.com/features/copilot) in the development of this code.
 
 ## Permissions
 
