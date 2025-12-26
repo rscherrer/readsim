@@ -82,4 +82,6 @@ This package was developed on Ubuntu Linux 24.04 LTS, in [RStudio](https://posit
 
 ## Permissions
 
+Copyright (c) 2025 Raphaël Scherrer.
+
 This code is licensed under the [MIT License](LICENSE.md). You are free to use, modify, and distribute it, provided that the original copyright notice and permission notice are included in all copies or substantial portions of the software.
