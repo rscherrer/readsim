@@ -1,4 +1,4 @@
-# readsim
+# readsim: Read and combine simulated data in R
 
 This is an [R](https://www.r-project.org/) package used to read data from separate files and combine them in tables in a modular way. It is particularly suited for simulated data.
 
