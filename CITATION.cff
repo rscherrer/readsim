@@ -7,7 +7,7 @@ authors:
     orcid: https://orcid.org/0000-0002-1447-7630
 
 title: "readsim: Read and combine simulated data into R"
-date-released: 2025
+date-released: 2025-04-16
 
 repository-code: https://github.com/rscherrer/readsim
 license: MIT
